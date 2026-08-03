@@ -1,6 +1,7 @@
 package com.payflow.payflow.controller;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,12 @@ public class OrderController {
 
     @PostMapping
     public ResponseEntity<Order> createOrder(@RequestBody CreateOrderRequest req) {
+        // Check if this idempotency key was already used
+        Optional<Order> existing = orderRepository.findByIdempotencyKey(req.getIdempotencyKey());
+        if (existing.isPresent()) {
+            return ResponseEntity.ok(existing.get()); // return the original, don't create a duplicate
+        }
+
         Order order = new Order();
         order.setCustomerId(req.getCustomerId());
         order.setAmount(req.getAmount());
