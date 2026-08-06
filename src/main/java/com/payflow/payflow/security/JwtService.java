@@ -7,14 +7,12 @@ import javax.crypto.SecretKey;
 import org.springframework.stereotype.Component;
 
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
 
 @Component
 public class JwtService {
 
     // In real production this key would come from an environment variable, not hardcoded
-    private final SecretKey key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    private final SecretKey key = Jwts.SIG.HS256.key().build();
     private final long expirationMs = 1000 * 60 * 60 * 24; // 24 hours
 
     public String generateToken(String email, String role) {
@@ -36,7 +34,7 @@ public class JwtService {
         try {
             Jwts.parser().verifyWith(key).build().parseSignedClaims(token);
             return true;
-        } catch (Exception e) {
+        } catch (io.jsonwebtoken.JwtException | IllegalArgumentException e) {
             return false;
         }
     }
