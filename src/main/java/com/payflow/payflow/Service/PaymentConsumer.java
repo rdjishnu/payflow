@@ -20,11 +20,23 @@ public class PaymentConsumer {
     @RabbitListener(queues = RabbitConfig.ORDER_QUEUE)
     public void processPayment(String orderId) {
         orderRepository.findById(UUID.fromString(orderId)).ifPresent(order -> {
-            // simulate a flaky payment gateway: ~70% success
-            boolean success = Math.random() > 0.3;
-            order.setStatus(success ? OrderStatus.PAID : OrderStatus.FAILED);
-            orderRepository.save(order);
-            System.out.println("Processed payment for order " + orderId + " -> " + order.getStatus());
+            boolean success = Math.random() > 0.3; // simulate ~70% success rate
+
+            if (success) {
+                order.setStatus(OrderStatus.PAID);
+                orderRepository.save(order);
+                System.out.println("Order " + orderId + " -> PAID");
+            } else {
+                order.setStatus(OrderStatus.FAILED);
+                orderRepository.save(order);
+                System.out.println("Order " + orderId + " -> FAILED. Payment gateway declined.");
+                compensate(orderId);
+            }
         });
+    }
+
+    private void compensate(String orderId) {
+        System.out.println("Compensating transaction: releasing reserved inventory for order " + orderId);
+        // TODO: replace with real inventory service call once that exists
     }
 }
