@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   postgres:
-    image: postgres:16
+    image: postgres:14
     environment:
       POSTGRES_DB: payflow
       POSTGRES_USER: payflow
@@ -10,7 +10,7 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
   rabbitmq:
     image: rabbitmq:3-management
     ports:
