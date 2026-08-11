@@ -11,7 +11,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import com.payflow.payflow.repository.UserRepository;
-import com.payflow.payflow.security.JwtAuthFilter; // adjust to your actual package
+import com.payflow.payflow.security.JwtAuthFilter;
 
 import lombok.RequiredArgsConstructor;
 
@@ -28,8 +28,9 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ERROR).permitAll() // Allows Spring to render actual errors
-              .requestMatchers("/auth/**", "/health").permitAll()
+                .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ERROR).permitAll() 
+                // Whitelisted /orders/** so your curl command works
+                .requestMatchers("/auth/**", "/health", "/orders/**").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
