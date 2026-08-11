@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.payflow.payflow.config.RabbitConfig;
 import com.payflow.payflow.dto.CreateOrderRequest;
 import com.payflow.payflow.model.Order;
 import com.payflow.payflow.model.OrderStatus;
@@ -25,13 +27,13 @@ import lombok.RequiredArgsConstructor;
 public class OrderController {
 
     private final OrderRepository orderRepository;
+    private final RabbitTemplate rabbitTemplate;
 
     @PostMapping
     public ResponseEntity<Order> createOrder(@RequestBody CreateOrderRequest req) {
-        // Check if this idempotency key was already used
         Optional<Order> existing = orderRepository.findByIdempotencyKey(req.getIdempotencyKey());
         if (existing.isPresent()) {
-            return ResponseEntity.ok(existing.get()); // return the original, don't create a duplicate
+            return ResponseEntity.ok(existing.get());
         }
 
         Order order = new Order();
@@ -40,7 +42,11 @@ public class OrderController {
         order.setStatus(OrderStatus.CREATED);
         order.setIdempotencyKey(req.getIdempotencyKey());
         order.setCreatedAt(Instant.now());
-        return ResponseEntity.ok(orderRepository.save(order));
+        Order saved = orderRepository.save(order);
+
+        rabbitTemplate.convertAndSend(RabbitConfig.ORDER_QUEUE, saved.getId().toString());
+
+        return ResponseEntity.ok(saved);
     }
 
     @GetMapping("/{id}")
