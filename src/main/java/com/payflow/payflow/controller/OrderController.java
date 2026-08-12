@@ -19,7 +19,7 @@ import com.payflow.payflow.dto.CreateOrderRequest;
 import com.payflow.payflow.model.Order;
 import com.payflow.payflow.model.OrderStatus;
 import com.payflow.payflow.repository.OrderRepository;
-import com.payflow.payflow.Service.IdempotencyService;
+import com.payflow.payflow.service.IdempotencyService;
 
 import lombok.RequiredArgsConstructor;
 
