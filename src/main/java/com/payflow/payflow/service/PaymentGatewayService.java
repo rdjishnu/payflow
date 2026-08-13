@@ -21,6 +21,7 @@ public class PaymentGatewayService {
     }
 
     // Signature must match: same args as the original method + Throwable at the end
+    @SuppressWarnings("unused")
     private boolean fallback(String orderId, Throwable t) {
         System.out.println("Fallback for order " + orderId + " -> "
                 + t.getClass().getSimpleName() + ": " + t.getMessage());
