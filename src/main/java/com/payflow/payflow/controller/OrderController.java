@@ -71,7 +71,7 @@ public class OrderController {
             rabbitTemplate.convertAndSend(RabbitConfig.ORDER_QUEUE, saved.getId().toString());
 
             return ResponseEntity.ok(saved);
-        } catch (Exception e) {
+        } catch (RuntimeException | IOException e) {
             idempotencyService.release(key); // free the key so client can retry cleanly
             throw e;
         }
