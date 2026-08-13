@@ -9,18 +9,22 @@ import com.payflow.payflow.config.RabbitConfig;
 import com.payflow.payflow.model.OrderStatus;
 import com.payflow.payflow.repository.OrderRepository;
 
-import lombok.RequiredArgsConstructor;
-
 @Service
-@RequiredArgsConstructor
 public class PaymentConsumer {
 
     private final OrderRepository orderRepository;
+    private final PaymentGatewayService paymentGatewayService;
+
+    // Manual constructor replacing @RequiredArgsConstructor
+    public PaymentConsumer(OrderRepository orderRepository, PaymentGatewayService paymentGatewayService) {
+        this.orderRepository = orderRepository;
+        this.paymentGatewayService = paymentGatewayService;
+    }
 
     @RabbitListener(queues = RabbitConfig.ORDER_QUEUE)
     public void processPayment(String orderId) {
         orderRepository.findById(UUID.fromString(orderId)).ifPresent(order -> {
-            boolean success = Math.random() > 0.3; // simulate ~70% success rate
+            boolean success = paymentGatewayService.charge(orderId);
 
             if (success) {
                 order.setStatus(OrderStatus.PAID);

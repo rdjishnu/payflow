@@ -5,8 +5,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,16 +21,19 @@ import com.payflow.payflow.model.OrderStatus;
 import com.payflow.payflow.repository.OrderRepository;
 import com.payflow.payflow.service.IdempotencyService;
 
-import lombok.RequiredArgsConstructor;
-
 @RestController
-@RequestMapping("/orders")
-@RequiredArgsConstructor
+@RequestMapping("/api/orders")
 public class OrderController {
 
     private final OrderRepository orderRepository;
     private final RabbitTemplate rabbitTemplate;
     private final IdempotencyService idempotencyService;
+
+    public OrderController(OrderRepository orderRepository, RabbitTemplate rabbitTemplate, IdempotencyService idempotencyService) {
+        this.orderRepository = orderRepository;
+        this.rabbitTemplate = rabbitTemplate;
+        this.idempotencyService = idempotencyService;
+    }
 
     private static final String PENDING = "PENDING";
 

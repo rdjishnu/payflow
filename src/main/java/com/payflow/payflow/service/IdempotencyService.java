@@ -1,18 +1,20 @@
 package com.payflow.payflow.service;
 
-import lombok.RequiredArgsConstructor;
+import java.time.Duration;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
-import java.util.Optional;
-
 @Service
-@RequiredArgsConstructor
 public class IdempotencyService {
 
     private final StringRedisTemplate redisTemplate;
+
+    public IdempotencyService(StringRedisTemplate redisTemplate) {
+        this.redisTemplate = redisTemplate;
+    }
 
     @Value("${payflow.idempotency.ttl-seconds:30}")
     private long ttlSeconds;

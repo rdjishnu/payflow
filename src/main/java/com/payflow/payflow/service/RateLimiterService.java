@@ -1,17 +1,19 @@
 package com.payflow.payflow.service;
 
-import lombok.RequiredArgsConstructor;
+import java.time.Duration;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
-
 @Service
-@RequiredArgsConstructor
 public class RateLimiterService {
 
     private final StringRedisTemplate redisTemplate;
+
+    public RateLimiterService(StringRedisTemplate redisTemplate) {
+        this.redisTemplate = redisTemplate;
+    }
 
     @Value("${payflow.rate-limit.capacity:10}")
     private long capacity;
