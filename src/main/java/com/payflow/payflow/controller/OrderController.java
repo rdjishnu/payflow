@@ -21,6 +21,7 @@ import com.payflow.payflow.model.Order;
 import com.payflow.payflow.model.OrderStatus;
 import com.payflow.payflow.repository.OrderRepository;
 import com.payflow.payflow.service.IdempotencyService;
+import com.payflow.payflow.service.NotificationPublisher;
 import com.payflow.payflow.service.RateLimiterService;
 
 @RestController
@@ -31,12 +32,14 @@ public class OrderController {
     private final RabbitTemplate rabbitTemplate;
     private final IdempotencyService idempotencyService;
     private final RateLimiterService rateLimiterService;
+    private final NotificationPublisher notificationPublisher;
 
-    public OrderController(OrderRepository orderRepository, RabbitTemplate rabbitTemplate, IdempotencyService idempotencyService, RateLimiterService rateLimiterService) {
+    public OrderController(OrderRepository orderRepository, RabbitTemplate rabbitTemplate, IdempotencyService idempotencyService, RateLimiterService rateLimiterService, NotificationPublisher notificationPublisher) {
         this.orderRepository = orderRepository;
         this.rabbitTemplate = rabbitTemplate;
         this.idempotencyService = idempotencyService;
         this.rateLimiterService = rateLimiterService;
+        this.notificationPublisher = notificationPublisher;
     }
 
     private static final String PENDING = "PENDING";
@@ -75,6 +78,7 @@ public class OrderController {
             idempotencyService.confirm(key, saved.getId().toString());
 
             rabbitTemplate.convertAndSend(RabbitConfig.ORDER_QUEUE, saved.getId().toString());
+            notificationPublisher.sendNotification(saved.getId().toString(), "CREATED");
 
             return ResponseEntity.ok(saved);
         } catch (Exception e) {
