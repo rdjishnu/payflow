@@ -15,7 +15,7 @@ public class RateLimiterService {
         this.redisTemplate = redisTemplate;
     }
 
-    @Value("${payflow.rate-limit.capacity:10}")
+    @Value("${payflow.rate-limit.capacity:20}")
     private long capacity;
 
     @Value("${payflow.rate-limit.refill-seconds:60}")

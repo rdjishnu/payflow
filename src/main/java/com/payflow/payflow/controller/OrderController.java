@@ -21,8 +21,7 @@ import com.payflow.payflow.model.Order;
 import com.payflow.payflow.model.OrderStatus;
 import com.payflow.payflow.repository.OrderRepository;
 import com.payflow.payflow.service.IdempotencyService;
-
-import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
+import com.payflow.payflow.service.RateLimiterService;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -31,18 +30,25 @@ public class OrderController {
     private final OrderRepository orderRepository;
     private final RabbitTemplate rabbitTemplate;
     private final IdempotencyService idempotencyService;
+    private final RateLimiterService rateLimiterService;
 
-    public OrderController(OrderRepository orderRepository, RabbitTemplate rabbitTemplate, IdempotencyService idempotencyService) {
+    public OrderController(OrderRepository orderRepository, RabbitTemplate rabbitTemplate, IdempotencyService idempotencyService, RateLimiterService rateLimiterService) {
         this.orderRepository = orderRepository;
         this.rabbitTemplate = rabbitTemplate;
         this.idempotencyService = idempotencyService;
+        this.rateLimiterService = rateLimiterService;
     }
 
     private static final String PENDING = "PENDING";
 
     @PostMapping
-    @RateLimiter(name = "orderCreation", fallbackMethod = "rateLimitFallback")
     public ResponseEntity<Order> createOrder(@RequestBody CreateOrderRequest req) {
+        String clientKey = req.getCustomerId() != null ? req.getCustomerId().toString() : "default";
+
+        if (!rateLimiterService.isAllowed(clientKey)) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
+        }
+
         String key = req.getIdempotencyKey();
 
         Optional<String> reservation = idempotencyService.checkAndReserve(key, PENDING);
@@ -75,10 +81,6 @@ public class OrderController {
             idempotencyService.release(key);
             throw e;
         }
-    }
-
-    public ResponseEntity<Order> rateLimitFallback(CreateOrderRequest req, Exception ex) {
-        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
     }
 
     @GetMapping("/{id}")
