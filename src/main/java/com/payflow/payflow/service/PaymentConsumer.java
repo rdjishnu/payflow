@@ -14,11 +14,12 @@ public class PaymentConsumer {
 
     private final OrderRepository orderRepository;
     private final PaymentGatewayService paymentGatewayService;
+    private final NotificationPublisher notificationPublisher;
 
-    // Manual constructor replacing @RequiredArgsConstructor
-    public PaymentConsumer(OrderRepository orderRepository, PaymentGatewayService paymentGatewayService) {
+    public PaymentConsumer(OrderRepository orderRepository, PaymentGatewayService paymentGatewayService, NotificationPublisher notificationPublisher) {
         this.orderRepository = orderRepository;
         this.paymentGatewayService = paymentGatewayService;
+        this.notificationPublisher = notificationPublisher;
     }
 
     @RabbitListener(queues = RabbitConfig.ORDER_QUEUE)
@@ -29,17 +30,16 @@ public class PaymentConsumer {
             if (success) {
                 order.setStatus(OrderStatus.PAID);
                 orderRepository.save(order);
-                System.out.println("Order " + orderId + " -> PAID");
+                notificationPublisher.sendNotification(orderId, "PAID");
             } else {
                 order.setStatus(OrderStatus.FAILED);
                 orderRepository.save(order);
-                System.out.println("Order " + orderId + " -> FAILED. Payment gateway declined.");
+                notificationPublisher.sendNotification(orderId, "FAILED");
                 compensate(orderId);
             }
         });
     }
 
     private void compensate(String orderId) {
-        System.out.println("Compensating transaction: releasing reserved inventory for order " + orderId);
     }
 }
