@@ -35,11 +35,11 @@ public class PaymentConsumer {
                 order.setStatus(OrderStatus.FAILED);
                 orderRepository.save(order);
                 notificationPublisher.sendNotification(orderId, "FAILED");
-                compensate(orderId);
+                compensate();
             }
         });
     }
 
-    private void compensate(String orderId) {
+    private void compensate() {
     }
 }
