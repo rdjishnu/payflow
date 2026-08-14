@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,6 +21,8 @@ import com.payflow.payflow.model.Order;
 import com.payflow.payflow.model.OrderStatus;
 import com.payflow.payflow.repository.OrderRepository;
 import com.payflow.payflow.service.IdempotencyService;
+
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -38,25 +41,22 @@ public class OrderController {
     private static final String PENDING = "PENDING";
 
     @PostMapping
+    @RateLimiter(name = "orderCreation", fallbackMethod = "rateLimitFallback")
     public ResponseEntity<Order> createOrder(@RequestBody CreateOrderRequest req) {
         String key = req.getIdempotencyKey();
 
-        // Fast path: Redis reservation, atomic, no DB hit for duplicates
         Optional<String> reservation = idempotencyService.checkAndReserve(key, PENDING);
 
         if (reservation.isPresent()) {
             String value = reservation.get();
             if (PENDING.equals(value)) {
-                // another request with this key is mid-flight right now
                 return ResponseEntity.status(HttpStatus.CONFLICT).build();
             }
-            // value is an actual order ID from a completed request — return that order
             return orderRepository.findById(UUID.fromString(value))
                     .map(ResponseEntity::ok)
                     .orElse(ResponseEntity.notFound().build());
         }
 
-        // First time seeing this key — proceed with creation
         try {
             Order order = new Order();
             order.setCustomerId(req.getCustomerId());
@@ -72,12 +72,17 @@ public class OrderController {
 
             return ResponseEntity.ok(saved);
         } catch (Exception e) {
-            idempotencyService.release(key); // free the key so client can retry cleanly
+            idempotencyService.release(key);
             throw e;
         }
     }
 
+    public ResponseEntity<Order> rateLimitFallback(CreateOrderRequest req, Exception ex) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
+    }
+
     @GetMapping("/{id}")
+    @Cacheable(value = "orders", key = "#id")
     public ResponseEntity<Order> getOrder(@PathVariable UUID id) {
         return orderRepository.findById(id)
                 .map(ResponseEntity::ok)
