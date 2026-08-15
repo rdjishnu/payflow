@@ -27,7 +27,8 @@ An order is created synchronously and validated, then payment processing is hand
 | Database | PostgreSQL |
 | Messaging | RabbitMQ |
 | Security | Spring Security, JWT |
-| Resilience | Resilience4j (retry, circuit breaker) |
+| Resilience | Resilience4j (retry, circuit breaker, rate limiter) |
+| Caching | Redis |
 | Infrastructure | Docker Compose |
 
 ## Features
@@ -38,6 +39,9 @@ An order is created synchronously and validated, then payment processing is hand
 - **Role-based access control** — `CUSTOMER` and `ADMIN` roles
 - **Async payment processing** — order creation publishes an event to RabbitMQ; a separate consumer processes payment independently
 - **Saga-style compensation** — failed payments trigger a compensating transaction rather than leaving orders in an inconsistent state
+- **Resilience patterns** — rate limiting on order creation, circuit breakers and retries on flaky payment gateways
+- **Performance** — Redis caching for fast order retrieval
+- **Event-Driven Notifications** — lifecycle updates pushed through dedicated notification queues
 
 ## API
 
@@ -45,30 +49,11 @@ An order is created synchronously and validated, then payment processing is hand
 |---|---|---|
 | `POST` | `/auth/register` | No |
 | `POST` | `/auth/login` | No |
-| `POST` | `/orders` | Yes |
-| `GET` | `/orders/{id}` | Yes |
+| `POST` | `/api/orders` | Yes |
+| `GET` | `/api/orders/{id}` | Yes |
 | `GET` | `/health` | No |
 
 ## Running locally
 
 ```bash
 docker compose up -d
-./mvnw spring-boot:run
-```
-
-The app starts on `localhost:8080`. Postgres and RabbitMQ run as containers via Docker Compose.
-
-## Roadmap
-
-- [x] Idempotency key enforcement
-- [x] JWT authentication + role-based access control
-- [x] Async payment processing via RabbitMQ
-- [x] Saga-style compensating transactions on payment failure
-- [ ] Circuit breaker + retry on the simulated payment gateway
-- [ ] Redis caching + rate limiting
-- [ ] Integration with [Notification Queue](https://github.com/rdjishnu/notification-queue) for order lifecycle notifications
-- [ ] Load testing + deployment
-
-## Author
-
-Built by [Jishnu](https://github.com/rdjishnu) as a backend engineering portfolio project.# test
