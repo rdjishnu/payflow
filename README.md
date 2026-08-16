@@ -101,10 +101,11 @@ The entire ecosystem is containerized. You do not need to install Postgres, Rabb
 
 1. Clone the repository and navigate to the root directory.
 2. Build and spin up the Docker network:
-```bash
-./mvnw clean package -DskipTests
-docker compose build
-docker compose up -d
+
+    ./mvnw clean package -DskipTests
+    docker compose build
+    docker compose up -d
+
 ---
 
 ## 🚦 Load Testing
