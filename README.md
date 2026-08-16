@@ -105,3 +105,34 @@ The entire ecosystem is containerized. You do not need to install Postgres, Rabb
 ./mvnw clean package -DskipTests
 docker compose build
 docker compose up -d
+---
+
+## 🚦 Load Testing
+
+To prove the Redis rate limiter and asynchronous architecture hold up under pressure, a custom multithreaded Java load test is included. 
+
+Run the test suite against a live instance to simulate concurrent user checkouts:
+
+    javac src/test/java/com/payflow/payflow/LoadTest.java
+    java -cp src/test/java com.payflow.payflow.LoadTest
+
+*Expected output: A mix of `Status: 200` (successful orders) and `Status: 429` (blocked by rate limiter).*
+
+---
+
+## 🗺️ Roadmap
+
+- [x] Idempotency key enforcement
+- [x] JWT authentication + role-based access control
+- [x] Async payment processing via RabbitMQ
+- [x] Saga-style compensating transactions on payment failure
+- [x] Circuit breaker + retry on the simulated payment gateway
+- [x] Redis caching + rate limiting
+- [x] Integration with Notification Queue for order lifecycle notifications
+- [x] Load testing + deployment
+
+---
+
+## 👨‍💻 Author
+
+Built from scratch by **[Jishnu (rdjishnu)](https://github.com/rdjishnu)** as a comprehensive backend engineering portfolio project.
