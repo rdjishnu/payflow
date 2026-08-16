@@ -136,4 +136,4 @@ Run the test suite against a live instance to simulate concurrent user checkouts
 
 ## 👨‍💻 Author
 
-Built from scratch by **[Jishnu (rdjishnu)](https://github.com/rdjishnu)** as a comprehensive backend engineering portfolio project.
+Built from scratch by **[Jishnu (rdjishnu)](https://github.com/rdjishnu)** as a comprehensive backend engineering  project.
