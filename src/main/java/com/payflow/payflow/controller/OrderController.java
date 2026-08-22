@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.rabbit.core.RabbitTemplate; // <-- Added this import
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +23,8 @@ import com.payflow.payflow.repository.OrderRepository;
 import com.payflow.payflow.service.IdempotencyService;
 import com.payflow.payflow.service.NotificationPublisher;
 import com.payflow.payflow.service.RateLimiterService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -45,7 +47,7 @@ public class OrderController {
     private static final String PENDING = "PENDING";
 
     @PostMapping
-    public ResponseEntity<Order> createOrder(@RequestBody CreateOrderRequest req) {
+    public ResponseEntity<Order> createOrder(@Valid @RequestBody CreateOrderRequest req) { // <-- Added @Valid here
         String clientKey = req.getCustomerId() != null ? req.getCustomerId().toString() : "default";
 
         if (!rateLimiterService.isAllowed(clientKey)) {
